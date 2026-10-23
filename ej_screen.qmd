@@ -1,0 +1,86 @@
+---
+title: "EDS 223 Homework 1"
+subtitle: "Map Making Practice"
+author: "Liam Sarmiento"
+date: 2026-10-10
+format:
+    pdf:
+        toc: true
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+```
+
+## Load Packages and Source Functions
+
+```{r}
+library(tidyverse)
+library(sf)
+library(here)
+library(stars)
+library(tmap)
+```
+
+## Import Data
+
+```{r}
+# read in geodatabase of EJScreen data at the Census Block Group level
+ejscreen <- sf::st_read(here::here("data", "ejscreen","EJSCREEN_2023_BG_StatePct_with_AS_CNMI_GU_VI.gdb")) 
+```
+
+## Filter Louisiana and New Orleans
+
+```{r}
+# filter to a state you are interested in
+louisiana <- ejscreen %>%
+  dplyr::filter(ST_ABBREV == "LA")
+
+# filter to a county you are interested in
+new_orleans <- ejscreen %>%
+  dplyr::filter(CNTY_NAME %in% c("Orleans Parish"))
+
+# find the average values for all variables within counties
+louisiana_counties <- aggregate(louisiana, by = list(louisiana$CNTY_NAME), FUN = mean)
+```
+
+## Visualize Data
+
+```{r}
+# Create Diesel Particulate Matter Map
+tm_shape(new_orleans) +
+  tm_fill(
+    "D2_DSLPM",
+    fill.legend = tm_legend(title = "Diesel Particulate Matter Percentile"),
+    fill.scale = tm_scale(values = c("grey", "yellow1"))
+  ) +
+  tm_scalebar() + tm_compass() +
+  tm_title(text = "Diesel Particulate Matter Risk in New Orleans",
+            frame = TRUE)
+
+# Create Air Toxin Cancer Map
+tm_shape(new_orleans) +
+  tm_fill(
+    "P_D2_CANCER",
+    fill.legend = tm_legend(title = "Air Toxin Cancer Risk Percentile"),
+    fill.scale = tm_scale(values = c("grey", "orangered4"))
+  ) +
+  tm_scalebar() + tm_compass() +
+  tm_title(text = "Air Toxin Cancer Risk in New Orleans",
+            frame = TRUE)
+```
+
+## Map explanation
+
+The first map shows diesel particulate matter exposure risk in New Orleans, where the brighter yellow areas show higher exposure, while the second map shows cancer risk from air toxins in New Orleans, where darker maroon shows higher percentile of cancer risk. Comparing the two maps, there is strong correlation of diesel particulate matter exposure to increased risk of cancer. These maps demonstrate just one of many environmental injustice problems where populations who are exposed to more pollution are at higher risk of developing health problems.
+
+## Data
+
+Data comes from https://pedp-ejscreen.azurewebsites.net/, an unofficial copy of EJScreen, which is a tool created by the United States Environmental Protection Agency to map out Environmental Injustices across the United States. 
+
+## Citations
+
+ https://pedp-ejscreen.azurewebsites.net/
+
+ https://www.epa.gov/ejscreen
